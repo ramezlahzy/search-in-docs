@@ -19,7 +19,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./src/Assets/icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.ramez.lahzy.searchindocsexpo"

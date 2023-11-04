@@ -1,40 +1,54 @@
 import {View, Text, ScrollView, TouchableOpacity} from 'react-native'
 import {useEffect, useState} from "react";
 
-const min = (a, b) => {
-    return a > b ? b : a
-}
-const max = (a, b) => {
-    return a > b ? a : b
-}
+const maxPartWords = 10
 const Extractor = ({navigation, files, searchText}) => {
     const [filesWithParts, setFilesWithParts] = useState([])
-    console.log("enter extractor")
-    // console.log(files)
+    const checkFoundWord = (currentWords, searchedWords) => {
+        let found = true
+        const currentWordsLowerCase = currentWords.map(word => word?.toLowerCase())
+        for (let j = 0; j < searchedWords.length; j++) {
+            let flag=false;
+            for (let i = 0; i < currentWordsLowerCase.length; i++) {
+                if(currentWordsLowerCase[i].includes(searchedWords[j].toLowerCase()))
+                    flag=true
+            }
+            if (!flag) {
+                found = false
+                break;
+            }
+        }
+        return found
+    }
     const getParts = (file, searchText) => {
+        const searchedWords = searchText.split(' ')
         const fileParts = []
-        console.log("start")
-        const textFile = file.text
-        console.log(textFile.length)
-        for (let i = 0; i < textFile.length; i++) {
-            const j = i + searchText.length
-            const subPart = textFile.substring(i, j);
-            if (subPart === searchText) {
-                const allThisPart = textFile.substring(i - 50, j + 50);
-                console.log(allThisPart)
+        let fileSplit = file.text.split(' ')
+            .join(' ').split('\n')
+            .join(' ').split('\t').join(' ').split(' ')
+        fileSplit = fileSplit.filter(word => word.length > 0)
+        const currentReachedParts = []
+        for (let i = 0; i < fileSplit.length; i++) {
+            currentReachedParts.push(fileSplit[i])
+            if (currentReachedParts.length > maxPartWords) currentReachedParts.shift()
+            let found = checkFoundWord(currentReachedParts, searchedWords)
+            if (found) {
+                const publishedParts = [...currentReachedParts]
+                for (let j = i + 1; j < maxPartWords + i && i < fileSplit.length; j++) {
+                    publishedParts.push(fileSplit[j])
+                }
                 fileParts.push({
-                    text: allThisPart,
-                    searchText: searchText,
-                    beginSearchedText: 50 + ((i < 50) ? 50 - i : 0),
-                    endSearchedText: 50 + ((i < 50) ? 50 - i : 0 + searchText.length)
+                    text: publishedParts,
                 })
-                console.log("found")
-                console.log("beginSearchedText", i - min(50, i))
-                console.log("endSearchedText", j - min(50, i))
+                while (checkFoundWord(currentReachedParts, searchedWords)) {
+                    currentReachedParts.shift()
+                }
+
             }
 
         }
-        return {fileParts, fileName: file.name, searchText, text: file.text}
+
+        return {fileParts, fileName: file.name, searchedWords, text: file.text}
 
     }
 
@@ -51,96 +65,92 @@ const Extractor = ({navigation, files, searchText}) => {
     }, [files, searchText])
     return (<ScrollView
         style={{
-            display: 'flex',
-            backgroundColor: '#fff',
+            display: 'flex', backgroundColor: '#fff',
         }}
     >
         {filesWithParts.map((part, index) => {
-            return (<TouchableOpacity key={index}
-                                      style={{
-                                          // borderColor: '#FFCC33', borderWidth: 2,
-                                      }}
-                                      onPress={() => {
-                                          navigation.navigate("OneDoc", {file: part})
-                                      }}
+            return (<View key={index}>
+                <Text
+                    style={{
+                        fontWeight: 'bold', color: '#4388CC',
+                        marginBottom: 10,
+                    }}
                 >
+                    {part.fileName}
                     <Text
                         style={{
-                            fontWeight: 'bold',
-                            color: '#4388CC',
+                            fontWeight: '700', color: '#F31B1B',
                         }}
                     >
-                        {part.fileName}
                         <Text
                             style={{
-                                fontWeight: '700',
-                                color: '#F31B1B',
+                                fontWeight: 'bold', color: '#2E8B57',
                             }}
                         >
-                            <Text
-                                style={{
-                                    fontWeight: 'bold',
-                                    color: '#2E8B57',
-                                }}
-                            >
 
-                                {"  " + part.fileParts.length + " "}
-                            </Text>
-                            occurrences
+                            {"  " + part.fileParts.length + " "}
                         </Text>
+                        occurrences
                     </Text>
-                    {
-                        part.fileParts.map((part, index) => {
-                            return (<View key={index}
-                                          style={{}}
-                            >
-                                <Text>
-                                    <Text
-                                        style={{
-                                            fontWeight: 'bold',
-                                            color: '#000000',
-                                            fontSize: 15,
-                                        }}
-                                    >
-                                        {1 + index + "-"}
+                </Text>
+                {part.fileParts.map((filePart, index) => {
+                    return (<TouchableOpacity key={index}
+                                              style={{
+                                                  marginBottom: 20
+                                              }}
+                                              onPress={() => {
+                                                  navigation.navigate("OneDoc", {
+                                                      file: {
+                                                          ...part,
+                                                          searchedPart: filePart.text.join(' ')
+                                                      }
+                                                  })
+                                              }}
+                        >
+                            <Text>
+                                <Text
+                                    style={{
+                                        fontWeight: 'bold', color: '#000000', fontSize: 15,
+                                    }}
+                                >
+                                    {1 + index + "-"}
 
-                                    </Text>
-                                    {part.text.substring(0, part.beginSearchedText)}
-                                    {/*<View*/}
-                                    {/*    style={{*/}
-                                    {/*        marginBottom: -10,*/}
-                                    {/*        marginTop: -10,                     */}
-                                    {/*    }}*/}
-                                    {/*>*/}
-                                        <Text style={{
-                                            backgroundColor: '#ECF00B',
-                                            borderColor: '#4388CC',
-                                            borderWidth: 2,
-                                            color:  '#4388CC',
-                                        }}
-
-                                        >
-
-                                            {part.text.substring(part.beginSearchedText, part.endSearchedText)}
-                                        </Text>
-                                    {/*</View>*/}
-                                    {part.text.substring(part.endSearchedText, part.text.length)}
                                 </Text>
-                            </View>)
-                        })}
-                    <View
+                                {filePart.text.map((item, index) => {
+                                    let flag=false;
+                                    for (let i = 0; i < part.searchedWords.length; i++) {
+                                        if(item.toLowerCase().includes(part.searchedWords[i].toLowerCase()))
+                                            flag=true
+                                    }
+                                    if (flag) {
+                                        return (<Text key={index}
+                                                      style={{
+                                                          backgroundColor: '#ECF00B',
+                                                          borderColor: '#4388CC',
+                                                          borderWidth: 2,
+                                                          color: '#4388CC',
+                                                      }}
+                                        >
+                                            {" " + item.split('&&&&((()))').join('\n')}
+                                        </Text>)
+                                    }
+                                    return (<Text key={index}
+                                                  style={{fontWeight: 'bold', color: '#000000', fontSize: 15}}>
+                                        {" " +                                     item.split('&&&&((()))').join('\n')}
+                                    </Text>)
+                                })}
+                            </Text>
+                        </TouchableOpacity>
+                    )
+                })}
+                <View
 
-                        style={{
-                            width: '100%',
-                            height: 2,
-                            backgroundColor: '#000000',
-                            marginTop: 30,
-                        }}
-                    />
-                </TouchableOpacity>
-            )
-        })
-        }
+                    style={{
+                        width: '100%', height: 2, backgroundColor: '#000000', marginTop: 30,
+                    }}
+                />
+            </View>)
+        })}
     </ScrollView>)
 }
 export default Extractor

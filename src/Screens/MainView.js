@@ -29,7 +29,7 @@ export default function MainView({navigation}) {
                 const text = (await mammoth.extractRawText({arrayBuffer})).value;
                 filesTexts.push({
                     name: file.name,
-                    text: text
+                    text: text.split('\n').join(' &&&&((())) ')
                 });
             }
             setLoading(false)
@@ -170,7 +170,7 @@ export default function MainView({navigation}) {
 
                     <Extractor
                         files={convertedFiles}
-                        searchText={searchText}
+                        searchText={searchText?.toLowerCase()}
                         navigation={navigation}
                     />
 

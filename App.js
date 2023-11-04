@@ -22,7 +22,7 @@ export default function App() {
                 <NavigationContainer>
                     <Stack.Navigator >
                         <Stack.Screen name="MainView" component={MainView} options={{headerShown: false}}/>
-                        <Stack.Screen name="OneDoc" component={Page}options={{headerShown:false}}/>
+                        <Stack.Screen name="OneDoc" component={Page} options={{headerShown:false}}/>
                     </Stack.Navigator>
                 </NavigationContainer>
 
