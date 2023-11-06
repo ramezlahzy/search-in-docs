@@ -8,10 +8,10 @@ const Extractor = ({navigation, files, searchText}) => {
         let found = true
         const currentWordsLowerCase = currentWords.map(word => word?.toLowerCase())
         for (let j = 0; j < searchedWords.length; j++) {
-            let flag=false;
+            let flag = false;
             for (let i = 0; i < currentWordsLowerCase.length; i++) {
-                if(currentWordsLowerCase[i].includes(searchedWords[j].toLowerCase()))
-                    flag=true
+                if (currentWordsLowerCase[i]?.includes(searchedWords[j].toLowerCase()))
+                    flag = true
             }
             if (!flag) {
                 found = false
@@ -117,10 +117,10 @@ const Extractor = ({navigation, files, searchText}) => {
 
                                 </Text>
                                 {filePart.text.map((item, index) => {
-                                    let flag=false;
+                                    let flag = false;
                                     for (let i = 0; i < part.searchedWords.length; i++) {
-                                        if(item.toLowerCase().includes(part.searchedWords[i].toLowerCase()))
-                                            flag=true
+                                        if (item?.toLowerCase().includes(part.searchedWords[i].toLowerCase()))
+                                            flag = true
                                     }
                                     if (flag) {
                                         return (<Text key={index}
@@ -136,7 +136,7 @@ const Extractor = ({navigation, files, searchText}) => {
                                     }
                                     return (<Text key={index}
                                                   style={{fontWeight: 'bold', color: '#000000', fontSize: 15}}>
-                                        {" " +                                     item.split('&&&&((()))').join('\n')}
+                                        {" " + item.split('&&&&((()))').join('\n')}
                                     </Text>)
                                 })}
                             </Text>
@@ -153,4 +153,58 @@ const Extractor = ({navigation, files, searchText}) => {
         })}
     </ScrollView>)
 }
+const extractText = (utf8) => {
+    let beginTextIndex = -1;
+    let endTextIndex = -1;
+    const allChars = ['\n', '\t', '\r', ' ', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+        'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E',
+        'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+        'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+        '.', ',', '?', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '-', '+', '=',
+        '{', '}', "'", '"', ':', ';', '<', '>', '/', '\\', '|', '[', ']', '`', '~', ' ', '¶'
+    ];
+    for (let i = 0; i < utf8.length; i++) {
+        let flag = true
+        let notIncluded = 0;
+        for (let j = i; j < 140 + i; j++) {
+            if (!allChars.includes(utf8[j]) && utf8[j] !== ' ') {
+                notIncluded++
+            }
+            if (notIncluded > 20) {
+                flag = false
+                break;
+            }
+        }
+        if (flag) {
+            if (beginTextIndex === -1)
+                beginTextIndex = i
+            endTextIndex = i + 140
+            break;
+        }
+    }
+    // endTextIndex = beginTextIndex;
+    let notIncluded = 0;
+    console.log("begin ", beginTextIndex, " end ", endTextIndex)
+    while (endTextIndex < utf8.length && notIncluded < 22) {
+        endTextIndex++
+        if (!allChars.includes(utf8[endTextIndex]) && utf8[endTextIndex] !== ' ') {
+            notIncluded++
+            //get number of character
+            // const number = parseInt(utf8[endTextIndex])
+            // console.log(number === utf8[endTextIndex])
+            // console.log(((Charab)utf8[endTextIndex])
+            // console.log("notIncluded", notIncluded, ("min" + utf8[endTextIndex] + "min") === "minmin")
+        }
+    }
+    let text = "";
+    for (let i = beginTextIndex; i < endTextIndex; i++) {
+        if (allChars.includes(utf8[i]))
+            text += utf8[i]
+    }
+    // console.log("begin ", beginTextIndex, " end ", endTextIndex)
+    // return utf8.substring(beginTextIndex, endTextIndex)
+    return text;
+
+}
+export {extractText}
 export default Extractor

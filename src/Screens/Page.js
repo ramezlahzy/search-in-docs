@@ -81,7 +81,7 @@ const Page = ({route}) => {
                                         .split(' ').map((word, index) => {
                                         let flag = false;
                                         for (let i = 0; i < file.searchedWords.length; i++) {
-                                            if (word.toLowerCase().includes(file.searchedWords[i].toLowerCase()))
+                                            if (word?.toLowerCase().includes(file.searchedWords[i]?.toLowerCase()))
                                                 flag = true
                                         }
                                         if (flag) {

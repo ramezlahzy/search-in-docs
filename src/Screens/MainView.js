@@ -2,6 +2,12 @@ import {TextEncoder, TextDecoder} from 'text-encoding';
 
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
+
+// npm install word-extractor
+// import WordExtractor from "word-extractor";
+// npm install transform-doc-to-html
+// import {extractRawText} from "transform-doc-to-html";
+// import WordExtractor from "../../node-word-extractor/lib/word";
 import {View, Text, TextInput, TouchableOpacity, SafeAreaView, ScrollView, RefreshControl} from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import {useState} from "react";
@@ -9,7 +15,8 @@ import {AntDesign} from '@expo/vector-icons';
 import * as FileSystem from "expo-file-system";
 import mammoth from "mammoth";
 import {Buffer} from 'buffer';
-import Extractor from "../Extractor";
+import Extractor, {extractText} from "../Extractor";
+// import extract from "../../node-word-extractor/lib/word";
 
 export default function MainView({navigation}) {
     const [pickedFiles, setPickedFiles] = useState(null);
@@ -22,11 +29,43 @@ export default function MainView({navigation}) {
             setLoading(true)
             for (let i = 0; i < pickedFiles.length; i++) {
                 const file = pickedFiles[i];
-                const base64 = await FileSystem.readAsStringAsync(file.uri, {
-                    encoding: FileSystem.EncodingType.Base64,
-                }).then(r => 'data:application/msword;base64,' + r);
-                const arrayBuffer = Buffer.from(base64, 'base64');
-                const text = (await mammoth.extractRawText({arrayBuffer})).value;
+                let text = ""
+                console.log(file, "file.type")
+                if (file.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                    const base64 = await FileSystem.readAsStringAsync(file.uri, {
+                        encoding: FileSystem.EncodingType.Base64,
+                    }).then(r => 'data:application/msword;base64,' + r);
+                    const arrayBuffer = Buffer.from(base64, 'base64');
+                    text = (await mammoth.extractRawText({arrayBuffer})).value;
+                } else {
+                    // const buffer= await FileSystem.readAsStringAsync(file.uri, {
+                    //     encoding: FileSystem.EncodingType.Base64,
+                    // }).then(r => Buffer.from(r, 'base64'));
+
+                    const utf = await FileSystem.readAsStringAsync(file.uri, {
+                        encoding: FileSystem.EncodingType.UTF8,
+                    });
+                    // const base64 = await FileSystem.readAsStringAsync(file.uri, {
+                    //     encoding: FileSystem.EncodingType.Base64,
+                    // }).then(r => 'data:application/msword;base64,' + r);
+                    // // console.log(base64, "base64")
+                    // // console.log(utf, "utf")
+                    // // const buffer = Buffer.from(utf, 'utf-8');
+                    text=extractText(utf)
+                    // try {
+                    //     // console.log(Buffer.isBuffer(base64), "base64")
+                    //     // text = extract(buffer)//.then(r => r.getBody());
+                    //     // console.log(text, "text")
+                    //
+                    // } catch (e) {
+                    //     console.log(e)
+                    // }
+                    // console.log(text, "text")
+                    // theArrayBuffer = new Uint8Array(Buffer.from(words, "utf-8")).buffer;
+                    // const arrayBuffer = Buffer.from(text, 'utf-8');
+                    // text = (await mammoth.extractRawText({arrayBuffer})).value;
+                }
+                // console.log(text)
                 filesTexts.push({
                     name: file.name,
                     text: text.split('\n').join(' &&&&((())) ')
@@ -71,7 +110,7 @@ export default function MainView({navigation}) {
                         const result = await DocumentPicker.getDocumentAsync(
                             {
                                 multiple: true,
-                                type: [ "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
+                                type: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword"]
                             });
                         if (!result.canceled || result.assets[0]) {
                             setPickedFiles(result.assets);
