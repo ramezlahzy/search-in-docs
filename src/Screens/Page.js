@@ -1,6 +1,6 @@
 import {Text, FlatList, View} from 'react-native';
 import {useState} from "react";
-
+import HighlightText from '@sanar/react-native-highlight-text';
 const Page = ({route}) => {
     const {file} = route.params;
     let fileSplit = file.text.split(' ')
@@ -55,62 +55,38 @@ const Page = ({route}) => {
                         }
                         {
                             index % 2 === 0 &&
-                            < Text style={{
-                                backgroundColor: '#fff',
-                                letterSpacing: 1,
-                                wordSpacing: 10,
-                            }}
-                                   onLayout={(event) => {
-                                       let {x, y, width, height} = event.nativeEvent.layout;
-                                       if (index === 0)
-                                           setOffset(height)
-                                   }}
 
-                            >
-                                {
-                                    item.split('&&&&((()))').join('\n')
-                                }
-                            </Text>
+                            <HighlightText
+                                highlightStyle={{   backgroundColor: '#ECF00B',
+                                    color: 'green',
+                                    fontWeight: 'bold',
+                            }}
+                                searchWords={file.searchedWords}
+                                textToHighlight={item.split('&&&&((()))').join('\n')}
+                                onLayout={(event) => {
+                                    let {x, y, width, height} = event.nativeEvent.layout;
+                                    if (index === 0)
+                                        setOffset(height)
+                                }}
+                            />
+
                         }
 
 
                         {index % 2 === 1 &&
-                            < Text style={{}}>
-                                {
-                                    item.split('&&&&((()))').join('\n')
-                                        .split(' ').map((word, index) => {
-                                        let flag = false;
-                                        for (let i = 0; i < file.searchedWords.length; i++) {
-                                            if (word?.toLowerCase().includes(file.searchedWords[i]?.toLowerCase()))
-                                                flag = true
-                                        }
-                                        if (flag) {
-
-
-                                            return (<Text key={index}
-                                                          style={{
-                                                              backgroundColor: '#ECF00B',
-                                                              borderColor: '#4388CC',
-                                                              borderWidth: 2,
-                                                              color: '#4388CC',
-                                                          }}
-                                            >
-                                                {" " + word}
-                                            </Text>)
-                                        }
-                                        return (<Text key={index}
-                                                      style={{
-                                                          fontWeight: 'bold',
-                                                          color: '#000000',
-                                                          fontSize: 15
-                                                      }}>
-                                            {" " + word}
-                                        </Text>)
-                                    })
-                                }
-                            </Text>
-                        }
-
+                            <HighlightText
+                                highlightStyle={{   backgroundColor: '#ECF00B',
+                                    color: 'green',
+                                    fontWeight: 'bold',
+                            }}
+                                searchWords={file.searchedWords}
+                                textToHighlight={item.split('&&&&((()))').join('\n')}
+                                style={{
+                                    fontWeight: 'bold',
+                                    color: '#000000',
+                                    fontSize: 15
+                                }}
+                            />}
                     </>
                 )
             }}
@@ -120,3 +96,4 @@ const Page = ({route}) => {
 }
 
 export default Page;
+

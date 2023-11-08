@@ -1,15 +1,15 @@
 {
   "expo": {
     "name": "search-in-docs-expo",
-    "slug": "search-in-docs-expo",
+    "slug": "search-in-docs",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./src/Assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./src/Assets/icon.png",
+      "image": "./src/Assets/img.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FFCC33"
+      "backgroundColor": "#FFFFFF"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -19,7 +19,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/Assets/icon.png",
+        "foregroundImage": "./src/Assets/img_1.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.ramez.lahzy.searchindocsexpo"
@@ -29,8 +29,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "6ebb31dd-0ada-4b3a-80cc-87af989f2f96"
+        "projectId": "088d6827-bc9f-4e49-904e-305109a5ac6b"
       }
-    }
+    },
+    "owner": "rameznashaatlahzy"
   }
 }

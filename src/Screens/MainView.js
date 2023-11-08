@@ -2,220 +2,221 @@ import {TextEncoder, TextDecoder} from 'text-encoding';
 
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
-
-// npm install word-extractor
-// import WordExtractor from "word-extractor";
-// npm install transform-doc-to-html
-// import {extractRawText} from "transform-doc-to-html";
-// import WordExtractor from "../../node-word-extractor/lib/word";
-import {View, Text, TextInput, TouchableOpacity, SafeAreaView, ScrollView, RefreshControl} from 'react-native';
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    SafeAreaView,
+    ScrollView,
+    RefreshControl,
+    FlatList,
+    ActivityIndicator
+} from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {AntDesign} from '@expo/vector-icons';
 import * as FileSystem from "expo-file-system";
 import mammoth from "mammoth";
 import {Buffer} from 'buffer';
-import Extractor, {extractText} from "../Extractor";
-// import extract from "../../node-word-extractor/lib/word";
+import {getParts, RenderItemMainView} from "../Extractor";
+
 
 export default function MainView({navigation}) {
     const [pickedFiles, setPickedFiles] = useState(null);
     const [convertedFiles, setConvertedFiles] = useState(null);
-
+    const [hidden, setHidden] = useState(true);
     const [loading, setLoading] = useState(false);
     const handleConvert = async () => {
         const filesTexts = []
-        if (pickedFiles) {
+
+        setHidden(false)
+        if (pickedFiles && convertedFiles === null) {
             setLoading(true)
             for (let i = 0; i < pickedFiles.length; i++) {
                 const file = pickedFiles[i];
-                let text = ""
-                console.log(file, "file.type")
-                if (file.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                    const base64 = await FileSystem.readAsStringAsync(file.uri, {
-                        encoding: FileSystem.EncodingType.Base64,
-                    }).then(r => 'data:application/msword;base64,' + r);
-                    const arrayBuffer = Buffer.from(base64, 'base64');
-                    text = (await mammoth.extractRawText({arrayBuffer})).value;
-                } else {
-                    // const buffer= await FileSystem.readAsStringAsync(file.uri, {
-                    //     encoding: FileSystem.EncodingType.Base64,
-                    // }).then(r => Buffer.from(r, 'base64'));
-
-                    const utf = await FileSystem.readAsStringAsync(file.uri, {
-                        encoding: FileSystem.EncodingType.UTF8,
-                    });
-                    // const base64 = await FileSystem.readAsStringAsync(file.uri, {
-                    //     encoding: FileSystem.EncodingType.Base64,
-                    // }).then(r => 'data:application/msword;base64,' + r);
-                    // // console.log(base64, "base64")
-                    // // console.log(utf, "utf")
-                    // // const buffer = Buffer.from(utf, 'utf-8');
-                    text=extractText(utf)
-                    // try {
-                    //     // console.log(Buffer.isBuffer(base64), "base64")
-                    //     // text = extract(buffer)//.then(r => r.getBody());
-                    //     // console.log(text, "text")
-                    //
-                    // } catch (e) {
-                    //     console.log(e)
-                    // }
-                    // console.log(text, "text")
-                    // theArrayBuffer = new Uint8Array(Buffer.from(words, "utf-8")).buffer;
-                    // const arrayBuffer = Buffer.from(text, 'utf-8');
-                    // text = (await mammoth.extractRawText({arrayBuffer})).value;
-                }
-                // console.log(text)
+                const base64 = await FileSystem.readAsStringAsync(file.uri, {
+                    encoding: FileSystem.EncodingType.Base64,
+                }).then(r => 'data:application/msword;base64,' + r);
+                const arrayBuffer = Buffer.from(base64, 'base64');
+                const text = (await mammoth.extractRawText({arrayBuffer})).value;
                 filesTexts.push({
                     name: file.name,
                     text: text.split('\n').join(' &&&&((())) ')
                 });
             }
             setLoading(false)
+            setConvertedFiles(filesTexts);
         }
-        setConvertedFiles(filesTexts);
 
     };
     const [searchText, setSearchText] = useState("");
+    const [filesWithParts, setFilesWithParts] = useState([])
+    useEffect(() => {
+        if (searchText && convertedFiles && convertedFiles.length > 0 && searchText.length > 0) {
+            const newParts = []
+            convertedFiles.forEach(file => {
+                const part = getParts(file, searchText)
+                newParts.push(part)
+                setFilesWithParts(newParts)
+            })
+            setFilesWithParts(newParts)
+        }
+    }, [convertedFiles, searchText])
+
     return (
-        <SafeAreaView>
-            <ScrollView style={{
+        <SafeAreaView
+            style={{
                 display: 'flex',
                 backgroundColor: '#fff',
                 minHeight: '100%',
             }}
-                        refreshControl={
-                            <RefreshControl
-                                refreshing={loading}
-                            />
-                        }
-            >
-                <TouchableOpacity
-                    title="Select Doc"
-                    style={{
-                        borderColor: '#FFCC33',
-                        borderWidth: 2,
-                        width: 274,
-                        height: 30,
-                        display: 'flex',
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        paddingLeft: 5,
-                        paddingRight: 5,
-                        marginTop: 120,
-                        alignSelf: 'center',
-                    }}
-                    onPress={async () => {
-                        const result = await DocumentPicker.getDocumentAsync(
-                            {
-                                multiple: true,
-                                type: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword"]
-                            });
-                        if (!result.canceled || result.assets[0]) {
-                            setPickedFiles(result.assets);
-                        }
-                    }}
+        >
+            <FlatList
+                data={filesWithParts}
+                keyExtractor={(item) => item.fileName + Math.random()}
+                ListHeaderComponent={<>
+                    {
+                        loading &&
+                        <ActivityIndicator size="large" color="black" style={{
+                            marginTop: 60, position: 'absolute',
+                            alignSelf: 'center'
+                        }}/>
+                    }
 
-                >
-
-                    <Text
+                    <TouchableOpacity
+                        title="Select Doc"
                         style={{
-                            color: '#FFCC33',
-                            fontWeight: '700',
-                            fontSize: 14,
-                            lineHeight: 18,
+                            borderColor: '#FFCC33',
+                            borderWidth: 2,
+                            width: 274,
+                            height: 30,
+                            display: 'flex',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            paddingLeft: 5,
+                            paddingRight: 5,
+                            marginTop: 120,
+                            alignSelf: 'center',
                         }}
+
+                        disabled={loading}
+                        onPress={async () => {
+                            setLoading(true)
+                            try {
+                                // if(loading)return
+                                setLoading(false)
+                                setConvertedFiles(null)
+                                const result = await DocumentPicker.getDocumentAsync(
+                                    {
+                                        multiple: true,
+                                        type: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
+                                    });
+                                if (!result.canceled || result.assets[0]) {
+                                    setPickedFiles(result.assets);
+                                    setHidden(true)
+                                }
+                            } catch (e) {
+                                setPickedFiles(null)
+                                setLoading(false)
+                            }
+                        }}
+
                     >
-                        BROWSE
-                    </Text>
-                    <AntDesign name="caretdown" size={18} color="#FFCC33"/>
 
-                </TouchableOpacity>
+                        <Text
+                            style={{
+                                color: '#FFCC33',
+                                fontWeight: '700',
+                                fontSize: 14,
+                                lineHeight: 18,
+                            }}
+                        >
+                            BROWSE
+                        </Text>
+                        <AntDesign name="caretdown" size={18} color="#FFCC33"/>
 
-                <TextInput
-                    style={{
-                        borderColor: '#4388CC',
-                        borderWidth: 2,
-                        width: 274,
-                        height: 30,
-                        marginBottom: 20,
-                        paddingLeft: 5,
-                        paddingRight: 5,
-                        color: '#4388CC',
-                        fontWeight: '700',
-                        marginTop: 40,
-                        alignSelf: 'center',
+                    </TouchableOpacity>
 
-                    }}
-                    value={searchText}
-                    onChangeText={setSearchText}
-                    placeholder="KEYWORDS"
-                    placeholderFontSize={14}
-
-                    placeholderTextColor="#4388CC"
-                    //placeholder font weight
-                    placeholderFontWeight="700"
-                />
-
-                <TouchableOpacity
-                    title="Convert"
-                    style={{
-                        backgroundColor: '#D9D9D9',
-                        width: 100,
-                        height: 100,
-                        borderRadius: 50,
-                        borderColor: '#2E8B57',
-                        borderWidth: 2,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        alignSelf: 'center',
-                        marginBottom: 20,
-                        marginTop: 50,
-                    }}
-                    onPress={handleConvert}
-                >
-                    <Text
+                    <TextInput
                         style={{
-                            color: '#2E8B57',
+                            borderColor: '#4388CC',
+                            borderWidth: 2,
+                            width: 274,
+                            height: 30,
+                            marginBottom: 20,
+                            paddingLeft: 5,
+                            paddingRight: 5,
+                            color: '#4388CC',
                             fontWeight: '700',
-                            fontSize: 14,
-                            lineHeight: 18,
+                            marginTop: 40,
+                            alignSelf: 'center',
                         }}
-                    >
-                        SEARCH
-                    </Text>
-                </TouchableOpacity>
-                <View
-                    style={{
-                        width: '100%',
-                        height: 2,
-                        backgroundColor: '#2E8B57',
-                        marginTop: 30,
-                    }}
-                />
-                <View
-                    style={{
-                        width: '100%',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        flexDirection: 'row',
-                        marginTop: 30,
-                        padding: 20,
-                    }}
-                >
-
-                    <Extractor
-                        files={convertedFiles}
-                        searchText={searchText?.toLowerCase()}
-                        navigation={navigation}
+                        value={searchText}
+                        onChangeText={(text) => {
+                            setSearchText(text)
+                            setHidden(true)
+                            setLoading(false)
+                        }}
+                        placeholder="KEYWORDS"
+                        placeholderFontSize={14}
+                        placeholderTextColor="#4388CC"
+                        placeholderFontWeight="700"
                     />
 
-                </View>
+                    <TouchableOpacity
+                        title="Convert"
+                        style={{
+                            backgroundColor: '#FFCC33',
+                            width: 100,
+                            height: 100,
+                            borderRadius: 50,
+                            borderColor: '#2E8B57',
+                            borderWidth: 2,
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            alignSelf: 'center',
+                            marginBottom: 20,
+                            marginTop: 50,
+                        }}
+                        disabled={loading}
+                        onPress={handleConvert}
+                    >
+                        <Text
+                            style={{
+                                color: '#2E8B57',
+                                fontWeight: '700',
+                                fontSize: 18,
+                                lineHeight: 18,
+                            }}
+                        >
+                            SEARCH
+                        </Text>
+                    </TouchableOpacity>
+                    <View
+                        style={{
+                            width: '100%',
+                            height: 2,
+                            backgroundColor: '#2E8B57',
+                            marginTop: 30,
+                        }}
+                    />
 
-            </ScrollView>
+                </>
+                }
+                renderItem={({item, index}) => {
+                    if (hidden || loading) return null
+                    return <RenderItemMainView
+                        item={item}
+                        index={index}
+                        navigation={navigation}
+                        searchText={searchText}
+                    />
+                }}
+
+            />
         </SafeAreaView>
     );
 }
